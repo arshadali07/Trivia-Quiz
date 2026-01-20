@@ -1,13 +1,11 @@
 package com.project.triviaquiz.presentation.start_quiz
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -31,10 +29,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
-import com.project.triviaquiz.presentation.util.BrushUtil
+import com.project.triviaquiz.presentation.util.QuizBackground
 import com.project.triviaquiz.ui.theme.TriviaQuizTheme
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.withContext
 
 @Composable
@@ -73,55 +70,55 @@ private fun StartQuizScreen(
     uiState: StartQuizUiState,
     onAction: (StartQuizAction) -> Unit
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(brush = BrushUtil.gradientBackgroundBrush)
-            .padding(horizontal = 24.dp)
-            .navigationBarsPadding()
-    ) {
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier.weight(1f)
+    QuizBackground {
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(horizontal = 24.dp)
         ) {
-            Text(
-                text = "Welcome to Trivia Quiz Challenge",
-                style = MaterialTheme.typography.headlineLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontFamily = FontFamily.SansSerif,
-                textAlign = TextAlign.Center,
-                fontWeight = FontWeight(500),
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-        if (uiState.isApiLoading) {
             Box(
                 contentAlignment = Alignment.Center,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.weight(1f)
             ) {
-                CircularProgressIndicator(
-                    color = Color.White
+                Text(
+                    text = "Welcome to Trivia Quiz Challenge",
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontFamily = FontFamily.SansSerif,
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight(500),
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
-        } else {
-            Button(
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White
-                ),
-                onClick = { onAction(StartQuizAction.OnStartQuizAction) },
-                content = {
-                    Text(
-                        text = "Start quiz",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontFamily = FontFamily.SansSerif,
-                        fontWeight = FontWeight(500)
+            if (uiState.isApiLoading) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    CircularProgressIndicator(
+                        color = Color.White
                     )
                 }
-            )
+            } else {
+                Button(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.White
+                    ),
+                    onClick = { onAction(StartQuizAction.OnStartQuizAction) },
+                    content = {
+                        Text(
+                            text = "Start quiz",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontFamily = FontFamily.SansSerif,
+                            fontWeight = FontWeight(500)
+                        )
+                    }
+                )
+            }
+            Spacer(modifier = Modifier.height(30.dp))
         }
-        Spacer(modifier = Modifier.height(30.dp))
     }
 }
 
