@@ -36,12 +36,12 @@ import kotlinx.coroutines.withContext
 
 @Composable
 fun StartQuizRoot(
-    modifier: Modifier = Modifier,
-    viewModel: StartQuizViewModel
+    viewModel: StartQuizViewModel,
+    onNavigateToQuizSection: () -> Unit
 ) {
-    val lifecycleOwner = LocalLifecycleOwner.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackBarHostState = remember { SnackbarHostState() }
+    val lifecycleOwner = LocalLifecycleOwner.current
 
     LaunchedEffect(lifecycleOwner, viewModel.uiEvent) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -51,6 +51,7 @@ fun StartQuizRoot(
                         is StartQuizEvent.ShowToastEvent -> {
                             snackBarHostState.showSnackbar(message = event.message)
                         }
+                        is StartQuizEvent.NavigateToQuizSectionEvent -> onNavigateToQuizSection()
                     }
                 }
             }
@@ -58,7 +59,7 @@ fun StartQuizRoot(
     }
 
     StartQuizScreen(
-        modifier = modifier,
+        modifier = Modifier,
         uiState = uiState,
         onAction = viewModel::onAction
     )
