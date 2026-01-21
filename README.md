@@ -7,6 +7,10 @@ Android App built with https://the-trivia-api.com/v2/questions?limit=10 API
 Android, Kotlin, Jetpack Compose, Coroutines, Flow, Retrofit, Navigation3
 
 # App Screen shots
+<figure>
+  <img src="https://github.com/user-attachments/assets/34a69ee5-e878-4070-895e-8d354677dd64" width="300" alt="Short description">
+  <figcaption>Figure 1: Start Quiz</figcaption>
+</figure>
 <img src="https://github.com/user-attachments/assets/34a69ee5-e878-4070-895e-8d354677dd64" width="300">
 <img src="https://github.com/user-attachments/assets/95f1b531-d681-44cb-ac20-4265fd0a0f54" width="300">
 <img src="https://github.com/user-attachments/assets/cab58f45-79f2-4c76-85fe-88a5fc41b178" width="300">
@@ -26,4 +30,7 @@ Android, Kotlin, Jetpack Compose, Coroutines, Flow, Retrofit, Navigation3
 <img src="https://github.com/user-attachments/assets/2cf4553d-7f58-4185-aac0-8393bf65819d" width="300">
 
 <img src="https://github.com/user-attachments/assets/09a112e5-3a96-4d73-8816-76906f4ff7cc" width="300">
+
+
+
 
