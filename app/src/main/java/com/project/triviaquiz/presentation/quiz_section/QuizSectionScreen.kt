@@ -201,7 +201,7 @@ private fun TimerComponent(
             )
             .padding(4.dp)
     ) {
-        val progress = ((MAX_TIME_COUNT - timer().toFloat()) / 10f)
+        val progress = ((MAX_TIME_COUNT - timer().toFloat()) / MAX_TIME_COUNT.toFloat())
         CircularProgressIndicator(
             gapSize = (-10).dp,
             trackColor = ErrorColor.copy(alpha = 0.2f),

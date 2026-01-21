@@ -1,6 +1,5 @@
 package com.project.triviaquiz.presentation.start_quiz
 
-import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.project.triviaquiz.data.RemoteTriviaQuizRepositoryImpl
@@ -29,7 +28,9 @@ class StartQuizViewModel(
     private val _selectedQuiz = MutableStateFlow<TriviaQuizUi?>(null)
     val selectedQuiz = _selectedQuiz.asStateFlow()
 
-    val timerCount = snapshotFlow { countTimer.timeCount }
+    val timerCount = countTimer.timerCount
+
+    private val selectedQuizIndex = MutableStateFlow(-1)
 
     fun onAction(action: StartQuizAction) {
         when (action) {
@@ -61,9 +62,13 @@ class StartQuizViewModel(
         }
     }
 
+
     private fun onSelectedQuiz(index: Int) {
-        countTimer.reset()
-        countTimer.start()
+        if (index != selectedQuizIndex.value) {
+            selectedQuizIndex.update { index }
+            countTimer.reset()
+            countTimer.start()
+        }
     }
 
     fun pauseTimer() = countTimer.pause()

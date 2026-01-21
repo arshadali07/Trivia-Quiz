@@ -1,18 +1,17 @@
 package com.project.triviaquiz.presentation.util
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.setValue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-const val MAX_TIME_COUNT = 10
+const val MAX_TIME_COUNT = 60
 class QuizCountDownTimer {
 
-    var timeCount by mutableIntStateOf(MAX_TIME_COUNT)
+    val timerCount = MutableStateFlow(MAX_TIME_COUNT)
 
     private var coroutineScope = CoroutineScope(Dispatchers.Main)
     private var isActive = false
@@ -22,9 +21,9 @@ class QuizCountDownTimer {
 
         coroutineScope.launch {
             this@QuizCountDownTimer.isActive = true
-            while(this@QuizCountDownTimer.isActive && timeCount > 0) {
+            while(this@QuizCountDownTimer.isActive && timerCount.value > 0) {
                 delay(1000L)
-                timeCount -= 1
+                timerCount.update { it.minus(1) }
             }
         }
     }
@@ -40,7 +39,7 @@ class QuizCountDownTimer {
     fun reset() {
         coroutineScope.cancel()
         coroutineScope = CoroutineScope(Dispatchers.Main)
-        timeCount = MAX_TIME_COUNT
+        timerCount.update { MAX_TIME_COUNT }
         isActive = false
     }
 }
