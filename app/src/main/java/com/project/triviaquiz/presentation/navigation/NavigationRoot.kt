@@ -8,6 +8,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import com.project.triviaquiz.presentation.quiz_section.QuizSectionRoot
+import com.project.triviaquiz.presentation.score_section.ScoreSectionRoot
 import com.project.triviaquiz.presentation.start_quiz.StartQuizRoot
 import com.project.triviaquiz.presentation.start_quiz.StartQuizViewModel
 
@@ -31,7 +32,20 @@ fun NavigationRoot(
             }
             entry<NavigationRoute.QuizSection> {
                 QuizSectionRoot(
-                    viewModel = viewModel
+                    viewModel = viewModel,
+                    navigateToScore = {
+                        backStack.add(NavigationRoute.ScoreSection)
+                        backStack.remove(NavigationRoute.QuizSection)
+                    }
+                )
+            }
+            entry<NavigationRoute.ScoreSection> {
+                ScoreSectionRoot(
+                    viewModel = viewModel,
+                    onBackToHome = {
+                        backStack.clear()
+                        backStack.add(NavigationRoute.StartQuiz)
+                    }
                 )
             }
         }

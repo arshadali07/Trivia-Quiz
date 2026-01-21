@@ -1,5 +1,6 @@
 package com.project.triviaquiz.presentation.quiz_section
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -20,20 +21,20 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
@@ -50,24 +51,27 @@ import com.project.triviaquiz.presentation.start_quiz.StartQuizViewModel
 import com.project.triviaquiz.presentation.util.QuizBackground
 import com.project.triviaquiz.presentation.util.QuizSectionTestData
 import com.project.triviaquiz.presentation.util.RoundedCornerCheckbox
+import com.project.triviaquiz.ui.theme.ErrorColor
 import com.project.triviaquiz.ui.theme.Purple40
 import com.project.triviaquiz.ui.theme.Purple80
+import com.project.triviaquiz.ui.theme.SuccessColor
 import com.project.triviaquiz.ui.theme.TriviaQuizTheme
 import kotlinx.coroutines.launch
 
 @Composable
 fun QuizSectionRoot(
-    modifier: Modifier = Modifier,
     viewModel: StartQuizViewModel,
+    navigateToScore: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val selectedQuiz by viewModel.selectedQuiz.collectAsStateWithLifecycle()
 
     QuizSectionScreen(
-        modifier = modifier,
+        modifier = Modifier,
         uiState = uiState,
         selectedQuiz = selectedQuiz,
-        onAction = viewModel::onAction
+        onAction = viewModel::onAction,
+        navigateToScore = navigateToScore
     )
 }
 
@@ -76,7 +80,8 @@ private fun QuizSectionScreen(
     modifier: Modifier = Modifier,
     uiState: StartQuizUiState,
     selectedQuiz: TriviaQuizUi?,
-    onAction: (StartQuizAction) -> Unit
+    onAction: (StartQuizAction) -> Unit,
+    navigateToScore: () -> Unit
 ) {
     val quizList = uiState.quizList
     val pagerState = rememberPagerState(pageCount = { quizList.size })
@@ -91,7 +96,6 @@ private fun QuizSectionScreen(
         ) {
             QuizSectionTopBar(
                 attemptedQuestion = "${pagerState.currentPage + 1}/${pagerState.pageCount}",
-                onBackClick = {}
             )
             QuizSectionProgressBar(
                 modifier = Modifier,
@@ -108,13 +112,21 @@ private fun QuizSectionScreen(
                         modifier = Modifier,
                         quizUi = quiz,
                         selectedQuiz = selectedQuiz,
+                        isLast = index == quizList.lastIndex,
                         onAnswerClick = { onAction(StartQuizAction.OnAnswerClickAction(it)) },
-                        onNextClick = {
-//                            onAction(StartQuizAction.OnNextClickAction)
-                            scope.launch {
-                                pagerState.animateScrollToPage(
-                                    page = pagerState.currentPage + 1
-                                )
+                        onButtonClick = {
+                            if (quiz.userAnswer.isNullOrBlank()) {
+                                onAction(StartQuizAction.OnAnswerSubmitAction)
+                            } else {
+                                if (pagerState.currentPage == pagerState.pageCount - 1) {
+                                    navigateToScore()
+                                } else {
+                                    scope.launch {
+                                        pagerState.animateScrollToPage(
+                                            page = pagerState.currentPage + 1
+                                        )
+                                    }
+                                }
                             }
                         }
                     )
@@ -127,21 +139,13 @@ private fun QuizSectionScreen(
 @Composable
 private fun QuizSectionTopBar(
     modifier: Modifier = Modifier,
-    attemptedQuestion: String,
-    onBackClick: () -> Unit
+    attemptedQuestion: String
 ) {
     Box(
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 12.dp)
     ) {
-        IconButton(
-            onClick = onBackClick,
-            content = {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Default.ArrowBack,
-                    contentDescription = "Back Arrow",
-                )
-            }
-        )
         Text(
             text = attemptedQuestion,
             style = MaterialTheme.typography.headlineSmall,
@@ -176,8 +180,9 @@ private fun QuizSectionCard(
     modifier: Modifier = Modifier,
     selectedQuiz: TriviaQuizUi?,
     quizUi: TriviaQuizUi,
+    isLast: Boolean,
     onAnswerClick: (TriviaQuizUi) -> Unit,
-    onNextClick: () -> Unit
+    onButtonClick: () -> Unit
 ) {
     Column(
         modifier = modifier
@@ -201,27 +206,54 @@ private fun QuizSectionCard(
         quizUi.answerOptions.fastForEach { answer ->
             QuizAnswerItemComponent(
                 answer = answer,
+                hasAnswered = !quizUi.userAnswer.isNullOrBlank(),
                 isSelected = answer == selectedQuiz?.userAnswer,
+                isCorrect = !quizUi.userAnswer.isNullOrBlank() && quizUi.correctAnswer == quizUi.userAnswer,
+                isIncorrect = !quizUi.userAnswer.isNullOrBlank() && quizUi.correctAnswer != quizUi.userAnswer,
                 onAnswerClick = { onAnswerClick(quizUi.copy(userAnswer = answer)) },
                 modifier = Modifier.padding(top = 8.dp)
             )
         }
-        Spacer(modifier = Modifier.height(45.dp))
+        AnimatedVisibility(visible = !quizUi.userAnswer.isNullOrBlank()) {
+            val isCorrect = quizUi.correctAnswer == quizUi.userAnswer
+            val text = if (isCorrect) "Correct" else "Incorrect"
+            val color = if (isCorrect) Color(0xFF58A60A) else Color(0xFFE3260D)
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodyLarge,
+                color = color,
+                textAlign = TextAlign.Center,
+                fontFamily = FontFamily.SansSerif,
+                fontWeight = FontWeight(800),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 24.dp)
+            )
+        }
+        Spacer(modifier = Modifier.height(24.dp))
+        val buttonText = if (quizUi.userAnswer.isNullOrBlank()) "Submit"
+        else {
+            if (isLast) "Go to scoreboard" else "Next"
+        }
+        val isEnabled = selectedQuiz != null && selectedQuiz.id == quizUi.id
+        val alpha = if (isEnabled) 1f else 0.5f
         Button(
-            onClick = onNextClick,
+            onClick = onButtonClick,
             colors = ButtonDefaults.buttonColors(
-                containerColor = Purple40
+                containerColor = Purple40.copy(alpha = alpha)
             ),
             shape = RoundedCornerShape(12.dp),
             content = {
                 Text(
-                    text = "Next",
+                    text = buttonText,
                     style = MaterialTheme.typography.bodyLarge,
                     color = Color.White,
                     textAlign = TextAlign.Center,
                     fontFamily = FontFamily.SansSerif,
                     fontWeight = FontWeight(500),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .alpha(alpha = alpha)
                 )
             }
         )
@@ -232,12 +264,25 @@ private fun QuizSectionCard(
 private fun QuizAnswerItemComponent(
     modifier: Modifier = Modifier,
     answer: String,
+    hasAnswered: Boolean,
     isSelected: Boolean,
+    isCorrect: Boolean,
+    isIncorrect: Boolean,
     onAnswerClick: () -> Unit
 ) {
     val shape = RoundedCornerShape(16.dp)
     val borderColor = if (isSelected) Color(0xFFE2CFFC) else Color(0xFFE2E5DB)
     val backgroundColor = if (isSelected) Color(0xFFE2CFFC).copy(alpha = 0.5f) else Color.White
+    val conditionedBGColor = when {
+        isSelected && isCorrect -> SuccessColor.copy(alpha = 0.5f)
+        isSelected && isIncorrect -> ErrorColor.copy(alpha = 0.5f)
+        else -> backgroundColor
+    }
+    val conditionedBorderColor = when {
+        isSelected && isCorrect -> SuccessColor
+        isSelected && isIncorrect -> ErrorColor
+        else -> borderColor
+    }
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -245,15 +290,15 @@ private fun QuizAnswerItemComponent(
             .fillMaxWidth()
             .clip(shape = shape)
             .background(
-                color = backgroundColor,
+                color = conditionedBGColor,
                 shape = shape
             )
             .border(
                 width = 1.dp,
-                color = borderColor,
+                color = conditionedBorderColor,
                 shape = shape
             )
-            .clickable(onClick = onAnswerClick)
+            .clickable(enabled = !hasAnswered, onClick = onAnswerClick)
             .padding(16.dp)
     ) {
         RoundedCornerCheckbox(
@@ -272,14 +317,35 @@ private fun QuizAnswerItemComponent(
     }
 }
 
-@Preview(showSystemUi = true)
+@Preview(showBackground = true)
 @Composable
 private fun QuizSectionScreenPreview() {
     TriviaQuizTheme {
+        var selectedQuiz by remember { mutableStateOf<TriviaQuizUi?>(null) }
+        var uiState by remember { mutableStateOf(testUiState) }
         QuizSectionScreen(
             uiState = testUiState,
-            selectedQuiz = null,
-            onAction = {}
+            selectedQuiz = selectedQuiz,
+            onAction = { action ->
+                when(action) {
+                    is StartQuizAction.OnStartQuizAction -> {}
+                    is StartQuizAction.OnAnswerClickAction -> {
+                        selectedQuiz = action.quizUi
+                    }
+                    is StartQuizAction.OnAnswerSubmitAction -> {
+                        uiState = uiState.copy(
+                            quizList = uiState.quizList.map { quiz ->
+                                if (quiz.id == selectedQuiz?.id) {
+                                    quiz.copy(userAnswer = selectedQuiz?.userAnswer)
+                                } else {
+                                    quiz
+                                }
+                            }
+                        )
+                    }
+                }
+            },
+            navigateToScore = {}
         )
     }
 }

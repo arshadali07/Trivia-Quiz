@@ -11,4 +11,7 @@ sealed interface NavigationRoute : NavKey {
 
     @Serializable
     data object QuizSection : NavigationRoute
+
+    @Serializable
+    data object ScoreSection : NavigationRoute
 }

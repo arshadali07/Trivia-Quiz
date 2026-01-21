@@ -30,7 +30,7 @@ class StartQuizViewModel(
         when (action) {
             is StartQuizAction.OnStartQuizAction -> onStartQuiz()
             is StartQuizAction.OnAnswerClickAction -> onAnswerClick(action.quizUi)
-            is StartQuizAction.OnNextClickAction -> onNextClick()
+            is StartQuizAction.OnAnswerSubmitAction -> onAnswerSubmit()
         }
     }
 
@@ -40,8 +40,18 @@ class StartQuizViewModel(
         _selectedQuiz.update { quizUi }
     }
 
-    private fun onNextClick() {
-
+    private fun onAnswerSubmit() {
+        _uiState.update {
+            it.copy(
+                quizList = it.quizList.map { quiz ->
+                    if (quiz.id == _selectedQuiz.value?.id) {
+                        quiz.copy(userAnswer = _selectedQuiz.value?.userAnswer)
+                    } else {
+                        quiz
+                    }
+                }
+            )
+        }
     }
 
     private fun getTriviaQuestions() {
