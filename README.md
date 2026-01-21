@@ -8,7 +8,7 @@ Android, Kotlin, Jetpack Compose, Coroutines, Flow, Retrofit, Navigation3
 
 # App Screen shots
 <figure>
-  <img src="https://github.com/user-attachments/assets/34a69ee5-e878-4070-895e-8d354677dd64" width="300" alt="Short description">
+  <img src="https://github.com/user-attachments/assets/34a69ee5-e878-4070-895e-8d354677dd64" width="300" alt="Added some message">
   <figcaption>Figure 1: Start Quiz</figcaption>
 </figure>
 <img src="https://github.com/user-attachments/assets/34a69ee5-e878-4070-895e-8d354677dd64" width="300">
