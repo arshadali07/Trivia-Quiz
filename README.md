@@ -14,5 +14,5 @@ Android, Kotlin, Jetpack Compose, Coroutines, Flow, Retrofit, Navigation3
 ![Quiz Section Without Rotation](https://github.com/user-attachments/assets/07f8ca80-fc2d-4c03-879e-c082afa313bb)
 ![Quiz Section With Rotation](https://github.com/user-attachments/assets/27b77269-7dfa-4e0d-a4cb-8ab3bcbce4a1)
 ![Quiz Section With Rotation 2](https://github.com/user-attachments/assets/e57d08b8-5531-4c39-890d-5b190622c40d)
-![Quiz Section Go to scoreboard](https://github.com/user-attachments/assets/09a112e5-3a96-4d73-8816-76906f4ff7cc)
-![Quiz Score baord screen](https://github.com/user-attachments/assets/2cf4553d-7f58-4185-aac0-8393bf65819d)
+![Quiz Section Go to scoreboard](https://github.com/user-attachments/assets/2cf4553d-7f58-4185-aac0-8393bf65819d)
+![Quiz Score Board Screen](https://github.com/user-attachments/assets/09a112e5-3a96-4d73-8816-76906f4ff7cc)
