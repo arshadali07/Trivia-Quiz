@@ -5,6 +5,9 @@ Android App built with https://the-trivia-api.com/v2/questions?limit=10 API
 
 # Technologies Used
 Android, Kotlin, Jetpack Compose, Coroutines, Flow, Retrofit, Navigation3
+<p align="center">
+  <img src="[your-image-url.png](https://github.com/user-attachments/assets/34a69ee5-e878-4070-895e-8d354677dd64)" width="250" height="800">
+</p>
 ![Start Quiz Screen](https://github.com/user-attachments/assets/34a69ee5-e878-4070-895e-8d354677dd64)
 ![Start Quiz Screen With Loader](https://github.com/user-attachments/assets/95f1b531-d681-44cb-ac20-4265fd0a0f54)
 ![Quiz Section 1](https://github.com/user-attachments/assets/cab58f45-79f2-4c76-85fe-88a5fc41b178)
