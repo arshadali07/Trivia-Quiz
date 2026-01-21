@@ -19,14 +19,17 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,6 +51,7 @@ import com.project.triviaquiz.presentation.model.TriviaQuizUi
 import com.project.triviaquiz.presentation.start_quiz.StartQuizAction
 import com.project.triviaquiz.presentation.start_quiz.StartQuizUiState
 import com.project.triviaquiz.presentation.start_quiz.StartQuizViewModel
+import com.project.triviaquiz.presentation.util.MAX_TIME_COUNT
 import com.project.triviaquiz.presentation.util.QuizBackground
 import com.project.triviaquiz.presentation.util.QuizSectionTestData
 import com.project.triviaquiz.presentation.util.RoundedCornerCheckbox
@@ -61,6 +65,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun QuizSectionRoot(
     viewModel: StartQuizViewModel,
+    timer: () -> Int,
     navigateToScore: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -69,6 +74,7 @@ fun QuizSectionRoot(
     QuizSectionScreen(
         modifier = Modifier,
         uiState = uiState,
+        timer = timer,
         selectedQuiz = selectedQuiz,
         onAction = viewModel::onAction,
         navigateToScore = navigateToScore
@@ -78,6 +84,7 @@ fun QuizSectionRoot(
 @Composable
 private fun QuizSectionScreen(
     modifier: Modifier = Modifier,
+    timer: () -> Int,
     uiState: StartQuizUiState,
     selectedQuiz: TriviaQuizUi?,
     onAction: (StartQuizAction) -> Unit,
@@ -86,6 +93,11 @@ private fun QuizSectionScreen(
     val quizList = uiState.quizList
     val pagerState = rememberPagerState(pageCount = { quizList.size })
     val scope = rememberCoroutineScope()
+
+    LaunchedEffect(pagerState.currentPage) {
+        onAction(StartQuizAction.OnSelectedQuizAction(index = pagerState.currentPage))
+    }
+
     QuizBackground {
         Column(
             verticalArrangement = Arrangement.spacedBy(24.dp),
@@ -101,6 +113,10 @@ private fun QuizSectionScreen(
                 modifier = Modifier,
                 progress = { (pagerState.currentPage + 1).toFloat() / pagerState.pageCount }
             )
+            TimerComponent(
+                timer = timer,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
             HorizontalPager(
                 state = pagerState,
                 userScrollEnabled = false,
@@ -111,20 +127,35 @@ private fun QuizSectionScreen(
                     QuizSectionCard(
                         modifier = Modifier,
                         quizUi = quiz,
+                        isTimeFinished = timer() <= 0,
                         selectedQuiz = selectedQuiz,
                         isLast = index == quizList.lastIndex,
                         onAnswerClick = { onAction(StartQuizAction.OnAnswerClickAction(it)) },
                         onButtonClick = {
-                            if (quiz.userAnswer.isNullOrBlank()) {
-                                onAction(StartQuizAction.OnAnswerSubmitAction)
-                            } else {
-                                if (pagerState.currentPage == pagerState.pageCount - 1) {
-                                    navigateToScore()
-                                } else {
-                                    scope.launch {
-                                        pagerState.animateScrollToPage(
-                                            page = pagerState.currentPage + 1
-                                        )
+                            when {
+                                timer() <= 0 -> {
+                                    if (pagerState.currentPage == pagerState.pageCount - 1) {
+                                        navigateToScore()
+                                    } else {
+                                        scope.launch {
+                                            pagerState.animateScrollToPage(
+                                                page = pagerState.currentPage + 1
+                                            )
+                                        }
+                                    }
+                                }
+                                quiz.userAnswer.isNullOrBlank() -> {
+                                    onAction(StartQuizAction.OnAnswerSubmitAction)
+                                }
+                                else -> {
+                                    if (pagerState.currentPage == pagerState.pageCount - 1) {
+                                        navigateToScore()
+                                    } else {
+                                        scope.launch {
+                                            pagerState.animateScrollToPage(
+                                                page = pagerState.currentPage + 1
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -158,6 +189,40 @@ private fun QuizSectionTopBar(
 }
 
 @Composable
+private fun TimerComponent(
+    modifier: Modifier = Modifier,
+    timer: () -> Int
+) {
+    Box(
+        modifier = modifier
+            .background(
+                color = Color.White,
+                shape = CircleShape
+            )
+            .padding(4.dp)
+    ) {
+        val progress = ((MAX_TIME_COUNT - timer().toFloat()) / 10f)
+        CircularProgressIndicator(
+            gapSize = (-10).dp,
+            trackColor = ErrorColor.copy(alpha = 0.2f),
+            color = ErrorColor.copy(alpha = 0.8f),
+            progress = { progress },
+            strokeWidth = 8.dp,
+            modifier = Modifier.size(50.dp)
+        )
+        val text = "${timer()}"
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            fontFamily = FontFamily.SansSerif,
+            fontWeight = FontWeight(500),
+            modifier = Modifier.align(Alignment.Center)
+        )
+    }
+}
+
+@Composable
 private fun QuizSectionProgressBar(
     modifier: Modifier = Modifier,
     progress: () -> Float
@@ -179,6 +244,7 @@ private fun QuizSectionProgressBar(
 private fun QuizSectionCard(
     modifier: Modifier = Modifier,
     selectedQuiz: TriviaQuizUi?,
+    isTimeFinished: Boolean,
     quizUi: TriviaQuizUi,
     isLast: Boolean,
     onAnswerClick: (TriviaQuizUi) -> Unit,
@@ -193,6 +259,19 @@ private fun QuizSectionCard(
             )
             .padding(24.dp)
     ) {
+        AnimatedVisibility(visible = isTimeFinished) {
+            Text(
+                text = "Time limit exceeded",
+                style = MaterialTheme.typography.bodyLarge,
+                color = ErrorColor,
+                textAlign = TextAlign.Center,
+                fontFamily = FontFamily.SansSerif,
+                fontWeight = FontWeight(800),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 24.dp)
+            )
+        }
         Text(
             text = quizUi.question,
             style = MaterialTheme.typography.bodyLarge,
@@ -207,6 +286,7 @@ private fun QuizSectionCard(
             QuizAnswerItemComponent(
                 answer = answer,
                 hasAnswered = !quizUi.userAnswer.isNullOrBlank(),
+                isTimeFinished = isTimeFinished,
                 isSelected = answer == selectedQuiz?.userAnswer,
                 isCorrect = !quizUi.userAnswer.isNullOrBlank() && quizUi.correctAnswer == quizUi.userAnswer,
                 isIncorrect = !quizUi.userAnswer.isNullOrBlank() && quizUi.correctAnswer != quizUi.userAnswer,
@@ -217,7 +297,7 @@ private fun QuizSectionCard(
         AnimatedVisibility(visible = !quizUi.userAnswer.isNullOrBlank()) {
             val isCorrect = quizUi.correctAnswer == quizUi.userAnswer
             val text = if (isCorrect) "Correct" else "Incorrect"
-            val color = if (isCorrect) Color(0xFF58A60A) else Color(0xFFE3260D)
+            val color = if (isCorrect) SuccessColor else ErrorColor
             Text(
                 text = text,
                 style = MaterialTheme.typography.bodyLarge,
@@ -231,17 +311,21 @@ private fun QuizSectionCard(
             )
         }
         Spacer(modifier = Modifier.height(24.dp))
-        val buttonText = if (quizUi.userAnswer.isNullOrBlank()) "Submit"
-        else {
-            if (isLast) "Go to scoreboard" else "Next"
+        val buttonText = when {
+            isTimeFinished -> if (isLast) "Go to scoreboard" else "Next"
+            quizUi.userAnswer.isNullOrBlank() -> "Submit"
+            else -> if (isLast) "Go to scoreboard" else "Next"
         }
-        val isEnabled = selectedQuiz != null && selectedQuiz.id == quizUi.id
-        val alpha = if (isEnabled) 1f else 0.5f
+        val isEnabled = if (isTimeFinished) true
+        else {
+            selectedQuiz != null && selectedQuiz.id == quizUi.id
+        }
         Button(
             onClick = onButtonClick,
             colors = ButtonDefaults.buttonColors(
-                containerColor = Purple40.copy(alpha = alpha)
+                containerColor = Purple40
             ),
+            enabled = isEnabled,
             shape = RoundedCornerShape(12.dp),
             content = {
                 Text(
@@ -253,7 +337,6 @@ private fun QuizSectionCard(
                     fontWeight = FontWeight(500),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .alpha(alpha = alpha)
                 )
             }
         )
@@ -264,6 +347,7 @@ private fun QuizSectionCard(
 private fun QuizAnswerItemComponent(
     modifier: Modifier = Modifier,
     answer: String,
+    isTimeFinished: Boolean,
     hasAnswered: Boolean,
     isSelected: Boolean,
     isCorrect: Boolean,
@@ -283,6 +367,8 @@ private fun QuizAnswerItemComponent(
         isSelected && isIncorrect -> ErrorColor
         else -> borderColor
     }
+    val isEnabled = !hasAnswered && !isTimeFinished
+    val alpha = if (isTimeFinished) 0.5f else 1f
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -298,13 +384,16 @@ private fun QuizAnswerItemComponent(
                 color = conditionedBorderColor,
                 shape = shape
             )
-            .clickable(enabled = !hasAnswered, onClick = onAnswerClick)
+            .clickable(enabled = isEnabled, onClick = onAnswerClick)
+            .alpha(alpha = alpha)
             .padding(16.dp)
     ) {
         RoundedCornerCheckbox(
             isChecked = isSelected,
             onValueChange = {},
-            modifier = Modifier.size(20.dp)
+            modifier = Modifier
+                .size(20.dp)
+                .clickable(enabled = isEnabled, onClick = onAnswerClick)
         )
         Text(
             text = answer,
@@ -324,7 +413,8 @@ private fun QuizSectionScreenPreview() {
         var selectedQuiz by remember { mutableStateOf<TriviaQuizUi?>(null) }
         var uiState by remember { mutableStateOf(testUiState) }
         QuizSectionScreen(
-            uiState = testUiState,
+            uiState = uiState,
+            timer = { 7 },
             selectedQuiz = selectedQuiz,
             onAction = { action ->
                 when(action) {
@@ -343,6 +433,7 @@ private fun QuizSectionScreenPreview() {
                             }
                         )
                     }
+                    is StartQuizAction.OnSelectedQuizAction -> {}
                 }
             },
             navigateToScore = {}

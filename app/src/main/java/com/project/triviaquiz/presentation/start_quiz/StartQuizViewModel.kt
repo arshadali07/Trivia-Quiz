@@ -1,11 +1,13 @@
 package com.project.triviaquiz.presentation.start_quiz
 
+import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.project.triviaquiz.data.RemoteTriviaQuizRepositoryImpl
 import com.project.triviaquiz.domain.TriviaQuizRepository
 import com.project.triviaquiz.presentation.model.TriviaQuizUi
 import com.project.triviaquiz.presentation.model.toUi
+import com.project.triviaquiz.presentation.util.QuizCountDownTimer
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,6 +19,7 @@ class StartQuizViewModel(
     private val repository: TriviaQuizRepository = RemoteTriviaQuizRepositoryImpl()
 ) : ViewModel() {
 
+    private val countTimer = QuizCountDownTimer()
     private val _uiState = MutableStateFlow(StartQuizUiState())
     val uiState = _uiState.asStateFlow()
 
@@ -26,11 +29,14 @@ class StartQuizViewModel(
     private val _selectedQuiz = MutableStateFlow<TriviaQuizUi?>(null)
     val selectedQuiz = _selectedQuiz.asStateFlow()
 
+    val timerCount = snapshotFlow { countTimer.timeCount }
+
     fun onAction(action: StartQuizAction) {
         when (action) {
             is StartQuizAction.OnStartQuizAction -> onStartQuiz()
             is StartQuizAction.OnAnswerClickAction -> onAnswerClick(action.quizUi)
             is StartQuizAction.OnAnswerSubmitAction -> onAnswerSubmit()
+            is StartQuizAction.OnSelectedQuizAction -> onSelectedQuiz(index = action.index)
         }
     }
 
@@ -41,6 +47,7 @@ class StartQuizViewModel(
     }
 
     private fun onAnswerSubmit() {
+        countTimer.pause()
         _uiState.update {
             it.copy(
                 quizList = it.quizList.map { quiz ->
@@ -53,6 +60,15 @@ class StartQuizViewModel(
             )
         }
     }
+
+    private fun onSelectedQuiz(index: Int) {
+        countTimer.reset()
+        countTimer.start()
+    }
+
+    fun pauseTimer() = countTimer.pause()
+
+    fun resumeTimer() = countTimer.resume()
 
     private fun getTriviaQuestions() {
         viewModelScope.launch {
