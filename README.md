@@ -5,6 +5,12 @@ Android App built with https://the-trivia-api.com/v2/questions?limit=10 API
 
 # Technologies Used
 Android, Kotlin, Jetpack Compose, Coroutines, Flow, Retrofit, Navigation3
+### 📥 Download App
+You can download the latest debug version of the application below:
+
+[**Download Debug APK**](https://github.com/arshadali07/Trivia-Quiz/releases/download/tricia-quiz-v1/app-debug.apk)
+
+> **Note:** Since this is a debug build not on the Play Store, you may need to [enable "Install from Unknown Sources"](https://developer.android.com) on your Android device to install it.
 
 # App Screen shots
 <img src="https://github.com/user-attachments/assets/34a69ee5-e878-4070-895e-8d354677dd64" width="300">
